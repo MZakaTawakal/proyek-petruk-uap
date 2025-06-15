@@ -16,7 +16,7 @@ struct Stats {
 class Territory {
 public:
     char name[20];
-    Stats stats;
+    Stats stats; 
     Territory* left;
     Territory* right;
 
@@ -48,35 +48,98 @@ Territory* conquerAndCombine(Territory* root, vector<string>& log) {
         log.push_back(string(root->name) + " menggabungkan " + left->name);
         root->stats.population += left->stats.population;
         root->stats.strength += left->stats.strength;
+        root->left = nullptr;
     }
     if (conqueredRight && right) {
         log.push_back(string(root->name) + " menggabungkan " + right->name);
         root->stats.population += right->stats.population;
         root->stats.strength += right->stats.strength;
+        root->right = nullptr;
     }
 
     return root;
 }
 
-int main() {
-    vector<string> logHasil;
+Territory* createSampleWorld(queue<Territory*>& wilayahQueue) {    
+    int a, b;
+    cout<<"Selamat datang di program divide and conquer wilayah\n";
+    cout<<"Masukkan jumlah populasi kerajaan Anda: ";
+    cin>>a;
+    cout<<"Masukkan tingkat kekuatan kerajaan Anda: ";
+    cin>>b;
 
-    Territory* A = new Territory("A", 100, 30);
-    Territory* B = new Territory("B", 150, 40);
-    Territory* Root = new Territory("Root", 300, 50);
+    const char* names[] = {"North1", "North2", "South1", "South2", "East", "West", "Kingdom"};
+    int pops[] = {200, 150, 180, 170, 300, 280, a};
+    int strn[] = {50, 60, 40, 45, 70, 65, b};
 
-    Root->left = A;
-    Root->right = B;
+    list<Territory*> wilayahList;
 
-    conquerAndCombine(Root, logHasil);
-
-    for (const string& log : logHasil) {
-        cout << log << endl;
+    for (int i = 0; i < 7; i++) {
+        Territory* t = new Territory(names[i], pops[i], strn[i]);
+        wilayahList.push_back(t);
+        wilayahQueue.push(t);
     }
 
-    delete A;
-    delete B;
-    delete Root;
+    auto it = wilayahList.begin();
+    Territory* N1 = *it++;
+    Territory* N2 = *it++;
+    Territory* S1 = *it++;
+    Territory* S2 = *it++;
+    Territory* East = *it++;
+    Territory* West = *it++;
+    Territory* Kingdom = *it++;
+
+    East->left = N1;
+    East->right = N2;
+    West->left = S1;
+    West->right = S2;
+    Kingdom->left = East;
+    Kingdom->right = West;
+
+    return Kingdom;
+}
+
+void map(){
+    cout<<"North1    North2\n";
+    cout<<"  \\         /\n";
+    cout<<"   \\       /\n";
+    cout<<"    \\     /\n";
+    cout<<"      East-------------Kingdom-------------West\n";
+    cout<<"                                           /   \\\n";
+    cout<<"                                          /     \\\n";
+    cout<<"                                         /       \\\n";
+    cout<<"                                      South1    South2\n";
+}
+
+int main() {
+    vector<string> logHasil; 
+    queue<Territory*> wilayahQueue;
+    stack<string> riwayatReverse;
+
+    map();
+    Territory* root = createSampleWorld(wilayahQueue);
+
+    cout << "\nMemulai penaklukan...\n\n";
+    conquerAndCombine(root, logHasil);
+
+    for (const string& line : logHasil) {
+        cout << line << "\n";
+        riwayatReverse.push(line);
+    }
+
+    cout << "\n--- Log dalam urutan terbalik (stack): ---\n";
+    while (!riwayatReverse.empty()) {
+        cout << riwayatReverse.top() << "\n";
+        riwayatReverse.pop();
+    }
+
+    cout << "\n--- Daftar semua wilayah (queue): ---\n";
+    while (!wilayahQueue.empty()) {
+        Territory* t = wilayahQueue.front();
+        wilayahQueue.pop();
+        cout << t->name << ", Populasi: " << t->stats.population
+             << ", Kekuatan: " << t->stats.strength << "\n";
+    }
 
     return 0;
 }
